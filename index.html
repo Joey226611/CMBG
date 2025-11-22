@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Digitale Muziek Bingo — Kerst Edition</title>
+  <style>
+  :root{
+    --bg:#000000;
+    --tile-bg:#111;
+    --tile-border:#ff0000;
+    --text:#fff;
+    --glow1:#ff0000;
+    --glow2:#00ff00;
+    --glow3:#ff008c;
+    --glow4:#00e5ff;
+  }
+
+  body{
+    margin:0;
+    background: radial-gradient(circle at center, #111 0%, #000 80%);
+    color:var(--text);
+    font-family: 'Poppins', Arial, sans-serif;
+    overflow:hidden;
+  }
+
+  h1{
+    font-size:22px;
+    text-shadow:0 0 8px var(--glow3);
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    width:100%;
+    height:100%;
+    gap:10px;
+  }
+
+  .tile{
+    border-radius:14px;
+    background:var(--tile-bg);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:10px;
+    font-size: clamp(12px, 2vw, 24px);
+    font-weight:bold;
+    cursor:pointer;
+    border:2px solid var(--tile-border);
+    color:var(--text);
+    box-shadow:0 0 10px var(--glow1), 0 0 22px var(--glow2);
+    transition:0.15s ease;
+  }
+
+  .tile:hover{
+    transform:scale(1.05);
+  }
+
+  .tile.marked{
+    background: linear-gradient(135deg, #00ff00 0%, #ff0000 100%);
+    color:black;
+    text-decoration: line-through;
+    box-shadow:0 0 20px var(--glow1),0 0 40px var(--glow3),0 0 60px var(--glow2);
+  }
+
+  #modeToggle{
+    font-size:18px;
+    cursor:pointer;
+    border:none;
+    padding:6px 10px;
+    border-radius:6px;
+    background:#222;
+    color:#fff;
+    transition:0.2s;
+  }
+
+  #modeToggle:hover{
+    transform:scale(1.1);
+  }
+
+  /* Confetti update (glitter) */
+  .celebrate h2{
+    font-size:30px;
+    color:#00ff9d;
+    text-shadow:0 0 10px #ff00ff,0 0 22px #00fff2;
+  }
+
+  .confetti i{
+    filter: drop-shadow(0 0 8px white);
+  }
+</style>
+</head>
+<body>
+  <div class="wrap" style="width:100%;padding:0;margin:0;">
+  <header style="position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;z-index:20;">
+      <h1 style="font-size:20px;margin:0;">Digitale Muziek Bingo — Kerst Edition</h1>
+      <button id="modeToggle" style="background:#fff;color:#000;border-radius:8px;padding:6px 12px;font-weight:bold;cursor:pointer;">🌙/☀️</button>
+  </header>
+
+  <div class="board-wrap" style="width:100vw;height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;">
+      <div class="card" aria-label="Bingo kaart" id="bingoCard" style="width:100%;height:100%;max-width:1000px;max-height:1000px;display:flex;flex-direction:column;justify-content:center;">
+          <div class="grid" id="grid" style="height:100%;"></div>
+      </div>
+  </div>
+</div>
+      <div class="controls">
+        <button id="newCard">Nieuwe kaart</button>
+        <button class="secondary" id="resetBtn">Reset selectie</button>
+      </div>
+    </header>
+
+    <div class="board-wrap">
+      <div class="card" aria-label="Bingo kaart" id="bingoCard">
+        <div class="grid" id="grid"></div>
+        <footer>Made with kerstvreugde 🎄 — Klik op een vakje om te kruisen</footer>
+      </div>
+      <div style="max-width:420px;">
+        <div class="card" style="padding:16px;">
+          <h3 style="margin-top:0">Legenda & tips</h3>
+          <ul>
+            <li>Klik op een vakje om het te markeren (kruis verschijnt).</li>
+            <li>Klik nogmaals om de markering te verwijderen.</li>
+            <li>Als alle 9 vakjes zijn gemarkeerd verschijnt een leuke animatie 🎉</li>
+            <li>Gebruik "Nieuwe kaart" om meteen een andere combinatie te krijgen.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- celebration overlay -->
+  <div class="overlay" id="overlay" style="display:none">
+    <div class="confetti" id="confetti"></div>
+    <div class="celebrate" role="dialog" aria-modal="true">
+      <h2>Volledige kaart! Ho Ho Ho — Bingooo! 🎅</h2>
+      <p>Je hebt alle nummers/stroken gevonden. Goed gedaan!</p>
+      <div style="display:flex;gap:10px">
+        <button id="closeCelebrate">Sluiten</button>
+        <button id="newCard2">Nieuwe kaart</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // lijst met liedjes (exact zoals gevraagd, kleine typefouten behouden)
+    const songs = [
+      'Blue Christmas - Elvis Presley',
+      'Christmas (Baby Please Come Home) - Mariah Carey',
+      'Its beginning to look a lot like Christmas - Perry Como',
+      'Shake Up Christmas - Train',
+      'My Only Wish (This Year) - Britney Spears',
+      "Why Couldn't It Be Christmas EveryDay? - Bianca Ryan",
+      'Frosty The Snowman - The Ronettes',
+      "What Christmas Means Ti Me (Feat. Stevie Wonders) - John Legend, Stevie Wonder",
+      'Rockin\' Around The Christmas Tree - Brenda Lee',
+      'Merry Christmas Everyone - Shakin\' Stevens',
+      "It's The most Wonderful time of the year - Andy Williams",
+      'All i want for christmas is you - Mariah Carey',
+      "Last Christmas -  Wham!",
+      'Feliz Navidad - Jose Feliciano',
+      'Sleigh Ride - The Ronettes',
+      'Driving Home For Christmas - Chris Rea',
+      'Stop the Cavalry - Jona Lewie',
+      'Coming Home With Santa - OG3NE',
+      "Baby, It's Cold Outoside - Rick Reuther",
+      '2000 Miles - Pretenders',
+      "Do they Know It's Christmas? - Band Aid",
+      'Rudolph the rednoised Reindeer - Dean Martin',
+      'I wish it could be christmas everyday  - Leona Lewis',
+      'I saw Mommy Kissing Santa Claus - The Jackson 5',
+      'Sleigh ride - Air Supply',
+      'You make it Feel Like Christmas - Gwen Stefani',
+      'Let it snow let is snow let it snow - Dean Martin',
+      'SnowMan - Sia'
+    ];
+
+    // helpers
+    function shuffle(arr){
+      const a = arr.slice();
+      for(let i=a.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];
+      }
+      return a;
+    }
+
+    const gridEl = document.getElementById('grid');
+    const newCardBtn = document.getElementById('newCard');
+    const resetBtn = document.getElementById('resetBtn');
+    const overlay = document.getElementById('overlay');
+    const confettiEl = document.getElementById('confetti');
+    const closeCelebrate = document.getElementById('closeCelebrate');
+    const newCard2 = document.getElementById('newCard2');
+
+    function makeCard(){
+      gridEl.innerHTML='';
+      const pick = shuffle(songs).slice(0,9);
+      pick.forEach((s,i)=>{
+        const tile = document.createElement('button');
+        tile.className='tile';
+        tile.type='button';
+        tile.setAttribute('aria-pressed','false');
+        tile.innerHTML = `<div class="title">${escapeHtml(s)}</div><div class="x">✕</div>`;
+        tile.addEventListener('click', ()=>{
+          const marked = tile.classList.toggle('marked');
+          tile.setAttribute('aria-pressed', String(marked));
+          checkWin();
+        });
+        gridEl.appendChild(tile);
+      });
+    }
+
+    function escapeHtml(text){
+      return text.replace(/[&<>"']/g,function(ch){
+        return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[ch];
+      });
+    }
+
+    function resetSelection(){
+      document.querySelectorAll('.tile.marked').forEach(t=>{t.classList.remove('marked');t.setAttribute('aria-pressed','false')});
+    }
+
+    function checkWin(){
+      const total = document.querySelectorAll('.tile').length;
+      const marked = document.querySelectorAll('.tile.marked').length;
+      if(total>0 && marked===total){
+        showCelebrate();
+      }
+    }
+
+    function showCelebrate(){
+      overlay.style.display='flex';
+      // bouw confetti
+      confettiEl.innerHTML='';
+      const colors = ['#e63946','#2a9d8f','#ffd166','#e76f51','#8ecae6','#f72585'];
+      for(let i=0;i<90;i++){
+        const el = document.createElement('i');
+        const left = Math.random()*100;
+        const delay = Math.random()*0.6;
+        const dur = 3 + Math.random()*2.5;
+        el.style.left = left + '%';
+        el.style.background = colors[Math.floor(Math.random()*colors.length)];
+        el.style.width = (6+Math.random()*10)+'px';
+        el.style.height = (8+Math.random()*12)+'px';
+        el.style.top = -(Math.random()*20+5)+'vh';
+        el.style.opacity = 0.9;
+        el.style.animationDuration = dur+'s';
+        el.style.animationDelay = delay+'s';
+        el.style.transform = 'rotate('+ (Math.random()*360)+'deg)';
+        confettiEl.appendChild(el);
+      }
+      // auto-hide after some time
+      setTimeout(()=>{
+        // keep overlay until user closes or new card
+      },2500);
+    }
+
+    // events
+    newCardBtn.addEventListener('click', ()=>{ makeCard(); overlay.style.display='none'; });
+    newCard2.addEventListener('click', ()=>{ makeCard(); overlay.style.display='none'; });
+    resetBtn.addEventListener('click', resetSelection);
+    closeCelebrate.addEventListener('click', ()=>{ overlay.style.display='none'; });
+
+    // init
+    makeCard();
+
+    // accessibility: keyboard support
+    gridEl.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        const t = document.activeElement;
+        if(t && t.classList.contains('tile')) t.click();
+      }
+    });
+  </script>
+</body>
+</html>
